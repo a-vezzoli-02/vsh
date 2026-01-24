@@ -22,10 +22,11 @@ const Executable = union(enum) {
     path: string,
 };
 
-const commands: [3]Command = [_]Command{
+const commands = [_]Command{
     .{ .name = "exit", .handler = exit_cmd },
     .{ .name = "echo", .handler = echo_cmd },
     .{ .name = "type", .handler = type_cmd },
+    .{ .name = "pwd", .handler = pwd_cmd },
 };
 
 pub fn find_executable(allocator: std.mem.Allocator, name: string) ?Executable {
@@ -88,7 +89,7 @@ fn type_cmd(context: ExecutableContext) IoError!void {
     }
 }
 
-fn type_pwd(context: ExecutableContext) IoError!void {
+fn pwd_cmd(context: ExecutableContext) IoError!void {
     var arena = std.heap.ArenaAllocator.init(context.allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
