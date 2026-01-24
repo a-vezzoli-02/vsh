@@ -1,6 +1,9 @@
 const std = @import("std");
 const Io = std.Io;
 
+const TokenizerIterator = @import("tokenizer.zig").TokenizerIterator;
+const commands = @import("commands.zig");
+
 var stdout_writer = std.fs.File.stdout().writerStreaming(&.{});
 const stdout = &stdout_writer.interface;
 
@@ -45,59 +48,10 @@ fn handle_command_tokenize(command: string) !void {
 }
 
 fn handle_command_tokenize_first(first: string, tokenizer: *TokenizerIterator) !void {
-    if (std.mem.eql(u8, "exit", first)) {
-        std.process.exit(0);
-    } else if (std.mem.eql(u8, "echo", first)) {
-        try echo(tokenizer);
+    const command = commands.find_command(first);
+    if (command) |c| {
+        return c.handler(stdout, tokenizer);
     } else {
         try stdout.print("{s}: command not found\n", .{first});
     }
 }
-
-fn echo(tokenizer: *TokenizerIterator) !void {
-    var is_first = true;
-    while (tokenizer.next()) |arg| {
-        if (!is_first) {
-            try stdout.print(" ", .{});
-        } else {
-            is_first = false;
-        }
-        try stdout.print("{s}", .{arg});
-    }
-    try stdout.print("\n", .{});
-}
-
-const TokenizerIterator = struct {
-    const Self = @This();
-
-    command: string,
-    index: usize = 0,
-    done: bool = false,
-
-    pub fn init(command: string) Self {
-        return .{ .command = command };
-    }
-
-    pub fn next(self: *Self) ?string {
-        const start = self.index;
-
-        while (self.index < self.command.len - 1) {
-            self.index += 1;
-            switch (self.command[self.index]) {
-                ' ' => {
-                    const slice = self.command[start..self.index];
-                    self.index += 1;
-                    return slice;
-                },
-                else => {},
-            }
-        }
-
-        if (self.done) {
-            return null;
-        } else {
-            self.done = true;
-            return self.command[start..];
-        }
-    }
-};
