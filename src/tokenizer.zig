@@ -11,6 +11,19 @@ pub const TokenizerIterator = struct {
         return .{ .command = command };
     }
 
+    pub fn reset(self: *Self) void {
+        self.index = 0;
+        self.done = false;
+    }
+
+    pub fn copy(self: Self) Self {
+        return .{
+            .command = self.command,
+            .index = self.index,
+            .done = self.done,
+        };
+    }
+
     pub fn next(self: *Self) ?string {
         const start = self.index;
 

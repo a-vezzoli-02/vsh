@@ -48,9 +48,24 @@ fn handle_command_tokenize(command: string) !void {
 }
 
 fn handle_command_tokenize_first(first: string, tokenizer: *TokenizerIterator) !void {
-    const command = commands.find_command(first);
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+    const command = commands.find_executable(allocator, first);
     if (command) |c| {
-        return c.handler(stdout, tokenizer);
+        const context = commands.ExecutableContext{
+            .allocator = allocator,
+            .stdout = stdout,
+            .tokenizer = tokenizer,
+        };
+        switch (c) {
+            .command => |cmd| {
+                return cmd.handler(context);
+            },
+            .path => {
+                return commands.run_path_executable(context);
+            },
+        }
     } else {
         try stdout.print("{s}: command not found\n", .{first});
     }

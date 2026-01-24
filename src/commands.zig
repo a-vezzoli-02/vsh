@@ -5,9 +5,21 @@ const IoError = Io.Writer.Error;
 const string = []const u8;
 const fs = @import("fs.zig");
 
+pub const ExecutableContext = struct {
+    allocator: std.mem.Allocator,
+    stdout: *Io.Writer,
+    tokenizer: *TokenizerIterator,
+};
+
 const Command = struct {
+    is_builtin: bool = true,
     name: string,
-    handler: *const fn (*Io.Writer, *TokenizerIterator) IoError!void,
+    handler: *const fn (ExecutableContext) IoError!void,
+};
+
+const Executable = union(enum) {
+    command: Command,
+    path: string,
 };
 
 const commands: [3]Command = [_]Command{
@@ -16,50 +28,82 @@ const commands: [3]Command = [_]Command{
     .{ .name = "type", .handler = type_cmd },
 };
 
-pub fn find_command(first: string) ?Command {
+pub fn find_executable(allocator: std.mem.Allocator, name: string) ?Executable {
     for (commands) |command| {
-        if (std.mem.eql(u8, command.name, first)) {
-            return command;
+        if (std.mem.eql(u8, command.name, name)) {
+            return Executable{ .command = command };
         }
     }
+
+    const path = fs.find_first_executable_path(allocator, name);
+
+    if (path) |p| {
+        return Executable{ .path = p };
+    }
+
     return null;
 }
 
-fn exit_cmd(stdout: *Io.Writer, tokenizer: *TokenizerIterator) IoError!void {
-    _ = tokenizer;
-    _ = stdout;
+fn exit_cmd(context: ExecutableContext) IoError!void {
+    _ = context;
     std.process.exit(0);
 }
 
-fn echo_cmd(stdout: *Io.Writer, tokenizer: *TokenizerIterator) IoError!void {
+fn echo_cmd(context: ExecutableContext) IoError!void {
     var is_first = true;
-    while (tokenizer.next()) |arg| {
+    while (context.tokenizer.next()) |arg| {
         if (!is_first) {
-            try stdout.print(" ", .{});
+            try context.stdout.print(" ", .{});
         } else {
             is_first = false;
         }
-        try stdout.print("{s}", .{arg});
+        try context.stdout.print("{s}", .{arg});
     }
-    try stdout.print("\n", .{});
+    try context.stdout.print("\n", .{});
 }
 
-fn type_cmd(stdout: *Io.Writer, tokenizer: *TokenizerIterator) IoError!void {
-    const arg = tokenizer.next();
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+fn type_cmd(context: ExecutableContext) IoError!void {
+    var arena = std.heap.ArenaAllocator.init(context.allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
+    const arg = context.tokenizer.next();
+
     if (arg) |a| {
-        const command = find_command(a);
-        if (command) |_| {
-            try stdout.print("{s} is a shell builtin\n", .{a});
-        } else if (fs.find_first_executable_path(allocator, a)) |path| {
-            try stdout.print("{s} is {s}\n", .{ a, path });
+        const command = find_executable(allocator, a);
+        if (command) |c| {
+            switch (c) {
+                .command => |cmd| {
+                    try context.stdout.print("{s} is a shell builtin\n", .{cmd.name});
+                },
+                .path => |path| {
+                    try context.stdout.print("{s} is {s}\n", .{ a, path });
+                },
+            }
         } else {
-            try stdout.print("{s}: not found\n", .{a});
+            try context.stdout.print("{s}: not found\n", .{a});
         }
     } else {
-        try stdout.print("type: missing arg\n", .{});
+        try context.stdout.print("type: missing arg\n", .{});
     }
+}
+
+pub fn run_path_executable(context: ExecutableContext) IoError!void {
+    var arena = std.heap.ArenaAllocator.init(context.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var argv = std.ArrayList(string).empty;
+    context.tokenizer.reset();
+    while (context.tokenizer.next()) |arg| {
+        argv.append(allocator, arg) catch unreachable;
+    }
+
+    var child = std.process.Child.init(argv.items, allocator);
+    child.stdout_behavior = .Inherit;
+    child.stdin_behavior = .Inherit;
+    child.stderr_behavior = .Inherit;
+    _ = child.spawnAndWait() catch |err| {
+        try context.stdout.print("failed to run {s}: {s}\n", .{ argv.items[0], @errorName(err) });
+    };
 }
