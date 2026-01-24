@@ -23,8 +23,18 @@ pub const PathContext = struct {
         self.allocator.free(self.pwd);
     }
 
-    pub fn cd(self: *Self, path: string) !void {
-        const new_path = try std.fs.path.resolve(self.allocator, &[_]string{ self.pwd, path });
+    pub fn cd(self: *Self, allocator: std.mem.Allocator, path: string) !void {
+        var rest = path;
+        if (rest.len == 0 or std.mem.startsWith(u8, rest, "~")) {
+            const home = env.getHome(allocator);
+            if (rest.len < 3) {
+                return cd(self, allocator, home);
+            }
+
+            rest = rest[2..];
+        }
+
+        const new_path = try std.fs.path.resolve(self.allocator, &[_]string{ self.pwd, rest });
         if (!exists(new_path)) return error.InvalidPath;
 
         self.allocator.free(self.pwd);

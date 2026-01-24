@@ -96,15 +96,11 @@ fn pwd_cmd(context: ExecutableContext) IoError!void {
 }
 
 fn cd_cmd(context: ExecutableContext) IoError!void {
-    const arg = context.tokenizer.next();
-    if (arg) |a| {
-        context.path.cd(a) catch |err| switch (err) {
-            error.InvalidPath => try context.stdout.print("cd: {s}: No such file or directory\n", .{a}),
-            else => try context.stdout.print("cd: {s}: {s}\n", .{ a, @errorName(err) }),
-        };
-    } else {
-        try context.stdout.print("cd: missing arg\n", .{});
-    }
+    const arg = context.tokenizer.next() orelse "";
+    context.path.cd(context.allocator, arg) catch |err| switch (err) {
+        error.InvalidPath => try context.stdout.print("cd: {s}: No such file or directory\n", .{arg}),
+        else => try context.stdout.print("cd: {s}: {s}\n", .{ arg, @errorName(err) }),
+    };
 }
 
 pub fn run_path_executable(context: ExecutableContext) IoError!void {
