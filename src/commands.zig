@@ -88,6 +88,19 @@ fn type_cmd(context: ExecutableContext) IoError!void {
     }
 }
 
+fn type_pwd(context: ExecutableContext) IoError!void {
+    var arena = std.heap.ArenaAllocator.init(context.allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    const pwd = std.process.getCwdAlloc(allocator) catch |err| {
+        try context.stdout.print("failed to get current directory: {s}\n", .{@errorName(err)});
+        return;
+    };
+
+    try context.stdout.print("{s}\n", .{pwd});
+}
+
 pub fn run_path_executable(context: ExecutableContext) IoError!void {
     var arena = std.heap.ArenaAllocator.init(context.allocator);
     defer arena.deinit();
