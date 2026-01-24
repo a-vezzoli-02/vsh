@@ -9,6 +9,7 @@ pub const ExecutableContext = struct {
     allocator: std.mem.Allocator,
     stdout: *Io.Writer,
     tokenizer: *TokenizerIterator,
+    path: *fs.PathContext,
 };
 
 const Command = struct {
@@ -27,6 +28,7 @@ const commands = [_]Command{
     .{ .name = "echo", .handler = echo_cmd },
     .{ .name = "type", .handler = type_cmd },
     .{ .name = "pwd", .handler = pwd_cmd },
+    .{ .name = "cd", .handler = cd_cmd },
 };
 
 pub fn find_executable(allocator: std.mem.Allocator, name: string) ?Executable {
@@ -90,16 +92,19 @@ fn type_cmd(context: ExecutableContext) IoError!void {
 }
 
 fn pwd_cmd(context: ExecutableContext) IoError!void {
-    var arena = std.heap.ArenaAllocator.init(context.allocator);
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    try context.stdout.print("{s}\n", .{context.path.pwd});
+}
 
-    const pwd = std.process.getCwdAlloc(allocator) catch |err| {
-        try context.stdout.print("failed to get current directory: {s}\n", .{@errorName(err)});
-        return;
-    };
-
-    try context.stdout.print("{s}\n", .{pwd});
+fn cd_cmd(context: ExecutableContext) IoError!void {
+    const arg = context.tokenizer.next();
+    if (arg) |a| {
+        context.path.cd(a) catch |err| switch (err) {
+            error.InvalidPath => try context.stdout.print("cd: {s}: No such file or directory\n", .{a}),
+            else => try context.stdout.print("cd: {s}: {s}\n", .{ a, @errorName(err) }),
+        };
+    } else {
+        try context.stdout.print("cd: missing arg\n", .{});
+    }
 }
 
 pub fn run_path_executable(context: ExecutableContext) IoError!void {

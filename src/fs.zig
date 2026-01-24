@@ -5,6 +5,33 @@ const string = []const u8;
 
 const valid_windows_executable_extensions = [_]string{ ".exe", ".cmd", ".bat", ".com" };
 
+pub const PathContext = struct {
+    const Self = @This();
+    buffer: [4096]u8,
+    buffer_allocator: std.heap.FixedBufferAllocator,
+    allocator: std.mem.Allocator,
+    pwd: string,
+
+    pub fn initSelf(self: *Self) void {
+        self.buffer = undefined;
+        self.buffer_allocator = std.heap.FixedBufferAllocator.init(&self.buffer);
+        self.allocator = self.buffer_allocator.allocator();
+        self.pwd = std.process.getCwdAlloc(self.allocator) catch unreachable;
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.allocator.free(self.pwd);
+    }
+
+    pub fn cd(self: *Self, path: string) !void {
+        const new_path = try std.fs.path.resolve(self.allocator, &[_]string{ self.pwd, path });
+        if (!exists(new_path)) return error.InvalidPath;
+
+        self.allocator.free(self.pwd);
+        self.pwd = new_path;
+    }
+};
+
 pub fn find_first_executable_path(allocator: std.mem.Allocator, command: string) ?string {
     var path_iterator = env.getPathIterator(allocator);
 
