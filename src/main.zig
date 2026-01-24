@@ -24,6 +24,8 @@ fn handle_command(command: ?[]const u8) !void {
     if (command) |c| {
         if (c.len == 0) {
             try stdout.print("\n", .{});
+        } else if (std.mem.eql(u8, c, "exit")) {
+            std.process.exit(0);
         } else {
             try stdout.print("{s}: command not found\n", .{c});
         }
