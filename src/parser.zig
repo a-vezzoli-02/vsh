@@ -43,14 +43,14 @@ pub const Parser = struct {
                     buffer.clearRetainingCapacity();
                 }
             } else {
-                if (!escaping) {
+                if (!escaping or current_kind == .QUOTE) {
                     if (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE) {
                         if (current_kind == null) {
                             current_kind = token.kind;
                         } else if (current_kind == token.kind) {
                             current_kind = null;
                         }
-                    } else if (token.kind == .BACKSLASH) {
+                    } else if (token.kind == .BACKSLASH and current_kind != .QUOTE) {
                         escaping = true;
                     }
                 } else {
@@ -88,7 +88,7 @@ fn literal(allocator: std.mem.Allocator, tokens: []const Token) !ParserLiteral {
     var escaping = false;
     for (tokens) |token| {
         if (!escaping) {
-            if (token.kind == .BACKSLASH) {
+            if (token.kind == .BACKSLASH and current_kind != .QUOTE) {
                 escaping = true;
                 continue;
             }
@@ -433,6 +433,55 @@ test "parser - escape single quote" {
                         Token{ .kind = TokenKind.QUOTE, .value = "'" },
                         Token{ .kind = TokenKind.LITERAL, .value = "hello" },
                         Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - ignore escape inside single quote" {
+    const input = "echo 'shell\\\\\\nscript'";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "shell\\\\\\nscript",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "shell" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "nscript" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - ignore escape inside single quote pt2" {
+    const input = "echo 'example\\\"test'";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "example\\\"test",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "example" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "test" },
                         Token{ .kind = TokenKind.QUOTE, .value = "'" },
                     },
                 },
