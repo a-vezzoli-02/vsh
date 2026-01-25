@@ -2,7 +2,10 @@ const std = @import("std");
 const Io = std.Io;
 const builtin = @import("builtin");
 
-const TokenizerIterator = @import("tokenizer.zig").TokenizerIterator;
+const par = @import("parser.zig");
+const Parser = par.Parser;
+const ParserCommand = par.ParserCommand;
+const Lexer = @import("lexer.zig").Lexer;
 const commands = @import("commands.zig");
 const fs = @import("fs.zig");
 
@@ -14,6 +17,10 @@ var reader = std.fs.File.stdin().readerStreaming(&input_buffer);
 const stdin = &reader.interface;
 
 const string = []const u8;
+
+test "main" {
+    std.testing.refAllDecls(@This());
+}
 
 pub fn main() !void {
     var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
@@ -31,8 +38,12 @@ pub fn main() !void {
 
     while (true) {
         const command = try prompt_new_line();
+
+        var arena = std.heap.ArenaAllocator.init(allocator);
+        defer arena.deinit();
+
         try handle_command(
-            allocator,
+            arena.allocator(),
             &path_context,
             command,
         );
@@ -69,14 +80,18 @@ fn handle_command_tokenize(
     path_context: *fs.PathContext,
     command: string,
 ) !void {
-    var tokenizer = TokenizerIterator.init(command);
-    const first = tokenizer.next();
-    if (first) |f| {
+    var lexer = Lexer.init(command);
+    var parser: Parser = undefined;
+    parser.initSelf(allocator);
+    defer parser.deinit();
+
+    const parser_command = try parser.parseLexer(&lexer);
+
+    if (parser_command) |*pcom| {
         try handle_command_tokenize_first(
             allocator,
             path_context,
-            f,
-            &tokenizer,
+            pcom,
         );
     } else {
         try stdout.print("\n", .{});
@@ -86,19 +101,18 @@ fn handle_command_tokenize(
 fn handle_command_tokenize_first(
     allocator: std.mem.Allocator,
     path_context: *fs.PathContext,
-    first: string,
-    tokenizer: *TokenizerIterator,
+    parser_command: *const ParserCommand,
 ) !void {
     var arena = std.heap.ArenaAllocator.init(allocator);
     defer arena.deinit();
     const arena_allocator = arena.allocator();
 
-    const command = commands.find_executable(allocator, first);
+    const command = commands.find_executable(allocator, parser_command.name.value);
     if (command) |c| {
         const context = commands.ExecutableContext{
             .allocator = arena_allocator,
             .stdout = stdout,
-            .tokenizer = tokenizer,
+            .parser_command = parser_command,
             .path = path_context,
         };
         switch (c) {
@@ -110,6 +124,6 @@ fn handle_command_tokenize_first(
             },
         }
     } else {
-        try stdout.print("{s}: command not found\n", .{first});
+        try stdout.print("{s}: command not found\n", .{parser_command.name.value});
     }
 }

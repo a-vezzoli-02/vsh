@@ -1,4 +1,4 @@
-const TokenizerIterator = @import("tokenizer.zig").TokenizerIterator;
+const ParserCommand = @import("parser.zig").ParserCommand;
 const std = @import("std");
 const Io = std.Io;
 const IoError = Io.Writer.Error;
@@ -8,7 +8,7 @@ const fs = @import("fs.zig");
 pub const ExecutableContext = struct {
     allocator: std.mem.Allocator,
     stdout: *Io.Writer,
-    tokenizer: *TokenizerIterator,
+    parser_command: *const ParserCommand,
     path: *fs.PathContext,
 };
 
@@ -54,13 +54,13 @@ fn exit_cmd(context: ExecutableContext) IoError!void {
 
 fn echo_cmd(context: ExecutableContext) IoError!void {
     var is_first = true;
-    while (context.tokenizer.next()) |arg| {
+    for (context.parser_command.args) |arg| {
         if (!is_first) {
             try context.stdout.print(" ", .{});
         } else {
             is_first = false;
         }
-        try context.stdout.print("{s}", .{arg});
+        try context.stdout.print("{s}", .{arg.value});
     }
     try context.stdout.print("\n", .{});
 }
@@ -70,24 +70,28 @@ fn type_cmd(context: ExecutableContext) IoError!void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    const arg = context.tokenizer.next();
+    if (context.parser_command.args.len < 1) {
+        try context.stdout.print("type: missing arg\n", .{});
+    }
 
-    if (arg) |a| {
-        const command = find_executable(allocator, a);
-        if (command) |c| {
-            switch (c) {
-                .command => |cmd| {
-                    try context.stdout.print("{s} is a shell builtin\n", .{cmd.name});
-                },
-                .path => |path| {
-                    try context.stdout.print("{s} is {s}\n", .{ a, path });
-                },
-            }
-        } else {
-            try context.stdout.print("{s}: not found\n", .{a});
+    if (context.parser_command.args.len > 1) {
+        try context.stdout.print("type: too many args\n", .{});
+    }
+
+    const arg = context.parser_command.args[0];
+
+    const command = find_executable(allocator, arg.value);
+    if (command) |c| {
+        switch (c) {
+            .command => |cmd| {
+                try context.stdout.print("{s} is a shell builtin\n", .{cmd.name});
+            },
+            .path => |path| {
+                try context.stdout.print("{s} is {s}\n", .{ arg.value, path });
+            },
         }
     } else {
-        try context.stdout.print("type: missing arg\n", .{});
+        try context.stdout.print("{s}: not found\n", .{arg.value});
     }
 }
 
@@ -96,7 +100,7 @@ fn pwd_cmd(context: ExecutableContext) IoError!void {
 }
 
 fn cd_cmd(context: ExecutableContext) IoError!void {
-    const arg = context.tokenizer.next() orelse "";
+    const arg = if (context.parser_command.args.len > 0) context.parser_command.args[0].value else "";
     context.path.cd(context.allocator, arg) catch |err| switch (err) {
         error.InvalidPath => try context.stdout.print("cd: {s}: No such file or directory\n", .{arg}),
         else => try context.stdout.print("cd: {s}: {s}\n", .{ arg, @errorName(err) }),
@@ -108,13 +112,15 @@ pub fn run_path_executable(context: ExecutableContext) IoError!void {
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    var argv = std.ArrayList(string).empty;
-    context.tokenizer.reset();
-    while (context.tokenizer.next()) |arg| {
-        argv.append(allocator, arg) catch unreachable;
+    var argv = std.ArrayList(string).initCapacity(allocator, 1) catch unreachable;
+    argv.append(allocator, context.parser_command.name.value) catch unreachable;
+
+    for (context.parser_command.args) |arg| {
+        argv.append(allocator, arg.value) catch unreachable;
     }
 
     var child = std.process.Child.init(argv.items, allocator);
+    child.cwd = context.path.pwd;
     child.stdout_behavior = .Inherit;
     child.stdin_behavior = .Inherit;
     child.stderr_behavior = .Inherit;

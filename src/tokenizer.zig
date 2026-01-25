@@ -6,6 +6,7 @@ pub const TokenizerIterator = struct {
     command: string,
     index: usize = 0,
     done: bool = false,
+    single_quote: bool = false,
 
     pub fn init(command: string) Self {
         return .{ .command = command };
@@ -31,10 +32,13 @@ pub const TokenizerIterator = struct {
             self.index += 1;
             switch (self.command[self.index]) {
                 ' ' => {
-                    const slice = self.command[start..self.index];
-                    self.index += 1;
-                    return slice;
+                    if (!self.single_quote) {
+                        const slice = self.command[start..self.index];
+                        self.index += 1;
+                        return slice;
+                    }
                 },
+                '\'' => self.single_quote = !self.single_quote,
                 else => {},
             }
         }
