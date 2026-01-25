@@ -72,17 +72,13 @@ pub const Lexer = struct {
     }
 
     pub fn readSpace(self: *Self) Token {
-        const start = self.index;
-        while (self.peekChar() == ' ') {
-            self.increaseIndex();
-        }
-
-        return Token{ .kind = TokenKind.SPACE, .value = self.input[start..self.index] };
+        self.increaseIndex();
+        return Token{ .kind = TokenKind.SPACE, .value = " " };
     }
 
     pub fn readLiteral(self: *Self) Token {
         const start = self.index;
-        while (self.peekChar() != ' ' and self.peekChar() != '\'' and self.peekChar() != '"' and self.peekChar() != 0) {
+        while (self.peekChar() != ' ' and self.peekChar() != '\'' and self.peekChar() != '"' and self.peekChar() != '\\' and self.peekChar() != 0) {
             self.increaseIndex();
         }
         return Token{ .kind = TokenKind.LITERAL, .value = self.input[start..self.index] };
@@ -138,7 +134,11 @@ test "lexer - long space" {
         Token{ .kind = TokenKind.LITERAL, .value = "echo" },
         Token{ .kind = TokenKind.SPACE, .value = " " },
         Token{ .kind = TokenKind.LITERAL, .value = "hello" },
-        Token{ .kind = TokenKind.SPACE, .value = "     " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
         Token{ .kind = TokenKind.LITERAL, .value = "world" },
     };
 
@@ -155,7 +155,11 @@ test "lexer - quotes" {
         Token{ .kind = TokenKind.QUOTE, .value = "'" },
         Token{ .kind = TokenKind.LITERAL, .value = "hello" },
         Token{ .kind = TokenKind.QUOTE, .value = "'" },
-        Token{ .kind = TokenKind.SPACE, .value = "     " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
+        Token{ .kind = TokenKind.SPACE, .value = " " },
         Token{ .kind = TokenKind.LITERAL, .value = "world" },
     };
 

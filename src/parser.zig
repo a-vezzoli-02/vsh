@@ -38,10 +38,12 @@ pub const Parser = struct {
         var escaping = false;
         while (lexer.next()) |token| {
             if (token.kind == .SPACE and current_kind == null and !escaping) {
-                try nodes.append(self.allocator, try literal(self.allocator, try buffer.toOwnedSlice(self.allocator)));
-                buffer.clearRetainingCapacity();
+                if (buffer.items.len > 0) {
+                    try nodes.append(self.allocator, try literal(self.allocator, try buffer.toOwnedSlice(self.allocator)));
+                    buffer.clearRetainingCapacity();
+                }
             } else {
-                if (escaping) {
+                if (!escaping) {
                     if (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE) {
                         if (current_kind == null) {
                             current_kind = token.kind;
@@ -85,14 +87,15 @@ fn literal(allocator: std.mem.Allocator, tokens: []const Token) !ParserLiteral {
     var current_kind: ?TokenKind = null;
     var escaping = false;
     for (tokens) |token| {
-        var just_set = false;
-
         if (!escaping) {
             if (token.kind == .BACKSLASH) {
                 escaping = true;
-            } else if (current_kind == null and (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE)) {
+                continue;
+            }
+
+            if (current_kind == null and (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE)) {
                 current_kind = token.kind;
-                just_set = true;
+                continue;
             }
         }
 
@@ -100,9 +103,11 @@ fn literal(allocator: std.mem.Allocator, tokens: []const Token) !ParserLiteral {
             filtered.append(allocator, token.value) catch unreachable;
         }
 
-        if (current_kind == token.kind and !just_set) {
+        if (current_kind == token.kind) {
             current_kind = null;
         }
+
+        escaping = false;
     }
 
     const joined: string = try std.mem.join(allocator, "", filtered.items);
@@ -278,7 +283,8 @@ test "parser - single quote inside double quote" {
                     .tokens = &[_]Token{
                         Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
                         Token{ .kind = TokenKind.LITERAL, .value = "hello" },
-                        Token{ .kind = TokenKind.SPACE, .value = "  " },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
                         Token{ .kind = TokenKind.QUOTE, .value = "\'" },
                         Token{ .kind = TokenKind.LITERAL, .value = "world" },
                         Token{ .kind = TokenKind.QUOTE, .value = "\'" },
@@ -303,7 +309,8 @@ test "parser - double quote inside single quote" {
                     .tokens = &[_]Token{
                         Token{ .kind = TokenKind.QUOTE, .value = "\'" },
                         Token{ .kind = TokenKind.LITERAL, .value = "hello" },
-                        Token{ .kind = TokenKind.SPACE, .value = "  " },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
                         Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
                         Token{ .kind = TokenKind.LITERAL, .value = "world" },
                         Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
@@ -317,23 +324,120 @@ test "parser - double quote inside single quote" {
 }
 
 test "parser - escape space" {
-const input = "echo three\ \ \ spaces";
+    const input = "echo three\\ \\ \\ spaces";
 
-const expected =
-    ParserCommand{
-        .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
-        .args = &[_]ParserLiteral{
-            ParserLiteral{
-                .value = "three   spaces",
-                .tokens = &[_]Token{
-                    Token{ .kind = TokenKind.LITERAL, .value = "three" },
-                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
-                    Token{ .kind = TokenKind.SPACE, .value = " " },
-                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
-                    Token{ .kind = TokenKind.SPACE, .value = " " },
-                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
-                    Token{ .kind = TokenKind.SPACE, .value = " " },
-                    Token{ .kind = TokenKind.LITERAL, .value = "spaces" },
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "three   spaces",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "three" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                        Token{ .kind = TokenKind.LITERAL, .value = "spaces" },
+                    },
                 },
             },
-        },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - mixed escaped spaces" {
+    const input = "echo before\\     after";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "before ",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "before" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.SPACE, .value = " " },
+                    },
+                },
+                ParserLiteral{
+                    .value = "after",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "after" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - escape literal character" {
+    const input = "echo test\\nexample";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "testnexample",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "test" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "nexample" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - escape backslash" {
+    const input = "echo hello\\\\world";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "hello\\world",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "hello" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "world" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - escape single quote" {
+    const input = "echo \\'hello\\'";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "'hello'",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "hello" },
+                        Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "'" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
