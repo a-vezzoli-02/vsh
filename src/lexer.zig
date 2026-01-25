@@ -5,6 +5,7 @@ pub const TokenKind = enum {
     LITERAL,
     QUOTE,
     DOUBLE_QUOTE,
+    BACKSLASH,
     SPACE,
 };
 
@@ -39,6 +40,7 @@ pub const Lexer = struct {
             const char = self.peekChar();
 
             return switch (char) {
+                '\\' => self.readBackslash(),
                 '\'' => self.readQuote(),
                 '"' => self.readDoubleQuote(),
                 ' ' => self.readSpace(),
@@ -52,6 +54,11 @@ pub const Lexer = struct {
     pub fn peek(self: *const Self) ?Token {
         var self_copy = self.copy();
         return self_copy.next();
+    }
+
+    pub fn readBackslash(self: *Self) Token {
+        self.increaseIndex();
+        return Token{ .kind = TokenKind.BACKSLASH, .value = "\\" };
     }
 
     pub fn readQuote(self: *Self) Token {

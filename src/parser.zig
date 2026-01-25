@@ -35,18 +35,26 @@ pub const Parser = struct {
         var buffer = std.ArrayList(Token).initCapacity(self.allocator, 1) catch unreachable;
 
         var current_kind: ?TokenKind = null;
+        var escaping = false;
         while (lexer.next()) |token| {
-            if (token.kind == .SPACE and current_kind == null) {
+            if (token.kind == .SPACE and current_kind == null and !escaping) {
                 try nodes.append(self.allocator, try literal(self.allocator, try buffer.toOwnedSlice(self.allocator)));
                 buffer.clearRetainingCapacity();
             } else {
-                if (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE) {
-                    if (current_kind == null) {
-                        current_kind = token.kind;
-                    } else if (current_kind == token.kind) {
-                        current_kind = null;
+                if (escaping) {
+                    if (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE) {
+                        if (current_kind == null) {
+                            current_kind = token.kind;
+                        } else if (current_kind == token.kind) {
+                            current_kind = null;
+                        }
+                    } else if (token.kind == .BACKSLASH) {
+                        escaping = true;
                     }
+                } else {
+                    escaping = false;
                 }
+
                 try buffer.append(self.allocator, token);
             }
         }
@@ -75,14 +83,20 @@ fn command(nodes: []const ParserLiteral) ParserCommand {
 fn literal(allocator: std.mem.Allocator, tokens: []const Token) !ParserLiteral {
     var filtered = std.ArrayList(string).initCapacity(allocator, 1) catch unreachable;
     var current_kind: ?TokenKind = null;
+    var escaping = false;
     for (tokens) |token| {
         var just_set = false;
-        if (current_kind == null and (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE)) {
-            current_kind = token.kind;
-            just_set = true;
+
+        if (!escaping) {
+            if (token.kind == .BACKSLASH) {
+                escaping = true;
+            } else if (current_kind == null and (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE)) {
+                current_kind = token.kind;
+                just_set = true;
+            }
         }
 
-        if (token.kind != current_kind) {
+        if (token.kind != current_kind or escaping) {
             filtered.append(allocator, token.value) catch unreachable;
         }
 
@@ -301,3 +315,25 @@ test "parser - double quote inside single quote" {
 
     try testParse(input, expected);
 }
+
+test "parser - escape space" {
+const input = "echo three\ \ \ spaces";
+
+const expected =
+    ParserCommand{
+        .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+        .args = &[_]ParserLiteral{
+            ParserLiteral{
+                .value = "three   spaces",
+                .tokens = &[_]Token{
+                    Token{ .kind = TokenKind.LITERAL, .value = "three" },
+                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                    Token{ .kind = TokenKind.SPACE, .value = " " },
+                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                    Token{ .kind = TokenKind.SPACE, .value = " " },
+                    Token{ .kind = TokenKind.BACKSLASH, .value = "\\" },
+                    Token{ .kind = TokenKind.SPACE, .value = " " },
+                    Token{ .kind = TokenKind.LITERAL, .value = "spaces" },
+                },
+            },
+        },
