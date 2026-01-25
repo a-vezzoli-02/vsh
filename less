@@ -1,0 +1,340 @@
+1/10 main.test.main...OK
+1/10 main.test.main...OK
+2/10 lexer.test.lexer - simple test...OK
+3/10 lexer.test.lexer - long space...OK
+4/10 lexer.test.lexer - quotes...2/10 lexer.test.lexer - simple test...OK
+3/10 lexer.test.lexer - long space...OK
+4/10 lexer.test.lexer - quotes...OK
+OK
+5/10 parser.test.parser - single word...5/10 parser.test.parser - single word...echo
+echo
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+                        return error.TestExpectedEqual;
+                        return error.TestExpectedEqual;
+                        ^
+                        ^
+/usr/lib/zig/std/testing.zig:846/usr/lib/zig/std/testing.zig:846:21: 0x11f1334:21: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig) in expectEqualDeepInner__anon_35156 (std.zig)
+
+                    return e;
+                    return e;
+                    ^
+                    ^
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in expectEqualDeepInner__anon_3513021: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+ (std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:874:/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in expectEqualDeepInner__anon_3512421: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+ (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                                        try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+^
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in testParse (main.zig)
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in testParse (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^
+    try std.testing.expectEqualDeep(expected, actual);
+    ^
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:112:5: 0x11f025a in test.parser - single word (main.zig)/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:112:5: 0x11f025a in test.parser - single word (main.zig)
+
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+
+6/10 parser.test.parser - simple test...6/10 parser.test.parser - simple test...echo
+echo
+ 
+ 
+hello
+hello
+ 
+ 
+world
+world
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795:/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in expectEqualDeepInner__anon_3520025: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+ (std.zig)
+                        return error.TestExpectedEqual;
+                                                return error.TestExpectedEqual;
+                        ^
+^
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f1334 in expectEqualDeepInner__anon_35156 (21: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig)
+std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:846:21/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in expectEqualDeepInner__anon_35130 (: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:874:/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in expectEqualDeepInner__anon_3512421: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+ (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in testParse5: 0x11f00b7 in testParse (main.zig)
+ (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^    try std.testing.expectEqualDeep(expected, actual);
+    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:133/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:133:5: 0x11fcdaa in :5: 0x11fcdaa in test.parser - simple test (main.zig)
+test.parser - simple test (main.zig)
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+
+7/10 parser.test.parser - long space...7/10 parser.test.parser - long space...echo
+ 
+echo
+ 
+hello
+hello
+     
+     
+world
+world
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in :25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+expectEqualDeepInner__anon_35200 (std.zig)
+                        return error.TestExpectedEqual;
+                        ^                        return error.TestExpectedEqual;
+                        ^
+
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f1334 in expectEqualDeepInner__anon_3515621: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig)
+ (std.zig)
+                    return e;
+                    ^
+                    return e;
+                    ^
+/usr/lib/zig/std/testing.zig:846/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in :21: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+expectEqualDeepInner__anon_35130 (std.zig)
+                    return e;
+                                        return e;
+                    ^
+^
+/usr/lib/zig/std/testing.zig:874:/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in expectEqualDeepInner__anon_3512421: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+ (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in testParse5: 0x11f00b7 in testParse (main.zig)
+ (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^    try std.testing.expectEqualDeep(expected, actual);
+    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:154:/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:154:5: 0x11fce6a in 5: 0x11fce6a in test.parser - long space (main.zig)
+test.parser - long space (main.zig)
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+
+8/10 parser.test.parser - quote...8/10 parser.test.parser - quote...echo
+ 
+echo
+ 
+'
+'
+hello
+'
+hello
+'
+ 
+ 
+world
+world
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in :25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+expectEqualDeepInner__anon_35200 (std.zig)
+                        return error.TestExpectedEqual;
+                                                return error.TestExpectedEqual;
+                        ^
+^
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f1334 in expectEqualDeepInner__anon_35156 (21: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig)
+std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in expectEqualDeepInner__anon_3513021: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+ (std.zig)
+                    return e;
+                                        return e;
+                    ^
+^
+/usr/lib/zig/std/testing.zig:874/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in :21: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+expectEqualDeepInner__anon_35124 (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in testParse5: 0x11f00b7 in testParse (main.zig)
+ (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^    try std.testing.expectEqualDeep(expected, actual);
+    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:179:/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:179:5: 0x11fcf2a in test.parser - quote5: 0x11fcf2a in test.parser - quote (main.zig)
+ (main.zig)
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+9/10 parser.test.parser - double word quote...
+9/10 parser.test.parser - double word quote...echo
+ 
+echo
+ 
+'
+'
+hello
+ 
+hello
+ 
+world
+'
+world
+'
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in :25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+expectEqualDeepInner__anon_35200 (std.zig)
+                        return error.TestExpectedEqual;
+                        ^
+                        return error.TestExpectedEqual;
+                        ^
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f1334 in expectEqualDeepInner__anon_3515621: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig)
+ (std.zig)
+                    return e;
+                                        return e;
+                    ^
+^
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in expectEqualDeepInner__anon_35130 (21: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:874:21/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in :5: 0x11f00b7 in testParse (main.zig)
+testParse (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^    try std.testing.expectEqualDeep(expected, actual);
+    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:202/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:202:5: 0x11fcfea:5: 0x11fcfea in test.parser - double word quote (main.zig)
+ in test.parser - double word quote (main.zig)
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+10/10 parser.test.parser - empty quote...
+10/10 parser.test.parser - empty quote...echo
+ 
+echo
+ 
+hello
+hello
+'
+'
+'
+'
+world
+world
+Slice len not the same, expected 4, found 0
+Slice len not the same, expected 4, found 0
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field value incorrect. expected { 101, 99, 104, 111 }, found {  }
+Field name incorrect. expected .{ .tokens = { .{ .kind = .LITERALField name incorrect. expected .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{, .value = { ... } } }, .value = { 101, 99, 104, 111 } }, found .{ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+ .tokens = { .{ .kind = .LITERAL, .value = { ... } } }, .value = {  } }
+FAIL (TestExpectedEqual)
+FAIL (TestExpectedEqual)
+/usr/lib/zig/std/testing.zig:795:/usr/lib/zig/std/testing.zig:795:25: 0x11f26fc in expectEqualDeepInner__anon_35200 (25: 0x11f26fc in expectEqualDeepInner__anon_35200 (std.zig)
+std.zig)
+                        return error.TestExpectedEqual;
+                                                return error.TestExpectedEqual;
+                        ^
+^
+/usr/lib/zig/std/testing.zig:846:21: 0x11f1334/usr/lib/zig/std/testing.zig:846:21: 0x11f1334 in expectEqualDeepInner__anon_35156 (std.zig)
+ in expectEqualDeepInner__anon_35156 (std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:846:/usr/lib/zig/std/testing.zig:846:21: 0x11f0933 in expectEqualDeepInner__anon_35130 (21: 0x11f0933 in expectEqualDeepInner__anon_35130 (std.zig)
+std.zig)
+                    return e;
+                    ^                    return e;
+                    ^
+
+/usr/lib/zig/std/testing.zig:874:/usr/lib/zig/std/testing.zig:874:21: 0x11f0425 in expectEqualDeepInner__anon_3512421: 0x11f0425 in expectEqualDeepInner__anon_35124 (std.zig)
+ (std.zig)
+                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^                    try expectEqualDeep(expected_payload, actual_payload);
+                    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:100:5: 0x11f00b7 in :5: 0x11f00b7 in testParse (main.zig)
+testParse (main.zig)
+    try std.testing.expectEqualDeep(expected, actual);
+    ^    try std.testing.expectEqualDeep(expected, actual);
+    ^
+
+/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:224/home/vezzo/stuff/dev/zig/codecrafters-shell-zig/src/parser.zig:224:5: 0x11fd0aa in :5: 0x11fd0aa in test.parser - empty quote (main.zig)
+test.parser - empty quote (main.zig)
+    try testParse(input, expected);
+    ^    try testParse(input, expected);
+    ^
+4 passed; 0 skipped; 6 failed.
+
+4 passed; 0 skipped; 6 failed.
+error: the following test command failed with exit code 1:
+.zig-cache/o/024ef15d9bf579a637df1ea81bff9b94/test --seed=0x7cdd77b8
+error: the following test command failed with exit code 1:
+.zig-cache/o/024ef15d9bf579a637df1ea81bff9b94/test --seed=0x7cdd77b8

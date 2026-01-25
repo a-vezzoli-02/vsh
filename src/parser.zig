@@ -34,20 +34,24 @@ pub const Parser = struct {
         var nodes = std.ArrayList(ParserLiteral).initCapacity(self.allocator, 1) catch unreachable;
         var buffer = std.ArrayList(Token).initCapacity(self.allocator, 1) catch unreachable;
 
-        var ignore_space = false;
+        var current_kind: ?TokenKind = null;
         while (lexer.next()) |token| {
-            if (token.kind == .SPACE and !ignore_space) {
+            if (token.kind == .SPACE and current_kind == null) {
                 try nodes.append(self.allocator, try literal(self.allocator, try buffer.toOwnedSlice(self.allocator)));
                 buffer.clearRetainingCapacity();
             } else {
-                if (token.kind == .QUOTE) {
-                    ignore_space = !ignore_space;
+                if (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE) {
+                    if (current_kind == null) {
+                        current_kind = token.kind;
+                    } else if (current_kind == token.kind) {
+                        current_kind = null;
+                    }
                 }
                 try buffer.append(self.allocator, token);
             }
         }
 
-        if (ignore_space) {
+        if (current_kind != null) {
             return error.UnexpectedEOF;
         }
 
@@ -70,9 +74,20 @@ fn command(nodes: []const ParserLiteral) ParserCommand {
 
 fn literal(allocator: std.mem.Allocator, tokens: []const Token) !ParserLiteral {
     var filtered = std.ArrayList(string).initCapacity(allocator, 1) catch unreachable;
+    var current_kind: ?TokenKind = null;
     for (tokens) |token| {
-        if (token.kind != .QUOTE) {
+        var just_set = false;
+        if (current_kind == null and (token.kind == .QUOTE or token.kind == .DOUBLE_QUOTE)) {
+            current_kind = token.kind;
+            just_set = true;
+        }
+
+        if (token.kind != current_kind) {
             filtered.append(allocator, token.value) catch unreachable;
+        }
+
+        if (current_kind == token.kind and !just_set) {
+            current_kind = null;
         }
     }
 
@@ -207,6 +222,78 @@ test "parser - empty quote" {
                         Token{ .kind = TokenKind.QUOTE, .value = "'" },
                         Token{ .kind = TokenKind.QUOTE, .value = "'" },
                         Token{ .kind = TokenKind.LITERAL, .value = "world" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - empty double quote" {
+    const input = "echo hello\"\"world";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "helloworld",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.LITERAL, .value = "hello" },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "world" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - single quote inside double quote" {
+    const input = "echo \"hello  'world'\"";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "hello  'world'",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "hello" },
+                        Token{ .kind = TokenKind.SPACE, .value = "  " },
+                        Token{ .kind = TokenKind.QUOTE, .value = "\'" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "world" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "\'" },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                    },
+                },
+            },
+        };
+
+    try testParse(input, expected);
+}
+
+test "parser - double quote inside single quote" {
+    const input = "echo 'hello  \"world\"'";
+
+    const expected =
+        ParserCommand{
+            .name = ParserLiteral{ .value = "echo", .tokens = &[_]Token{Token{ .kind = TokenKind.LITERAL, .value = "echo" }} },
+            .args = &[_]ParserLiteral{
+                ParserLiteral{
+                    .value = "hello  \"world\"",
+                    .tokens = &[_]Token{
+                        Token{ .kind = TokenKind.QUOTE, .value = "\'" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "hello" },
+                        Token{ .kind = TokenKind.SPACE, .value = "  " },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.LITERAL, .value = "world" },
+                        Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" },
+                        Token{ .kind = TokenKind.QUOTE, .value = "\'" },
                     },
                 },
             },

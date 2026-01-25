@@ -4,6 +4,7 @@ const string = []const u8;
 pub const TokenKind = enum {
     LITERAL,
     QUOTE,
+    DOUBLE_QUOTE,
     SPACE,
 };
 
@@ -39,6 +40,7 @@ pub const Lexer = struct {
 
             return switch (char) {
                 '\'' => self.readQuote(),
+                '"' => self.readDoubleQuote(),
                 ' ' => self.readSpace(),
                 else => self.readLiteral(),
             };
@@ -57,6 +59,11 @@ pub const Lexer = struct {
         return Token{ .kind = TokenKind.QUOTE, .value = "'" };
     }
 
+    pub fn readDoubleQuote(self: *Self) Token {
+        self.increaseIndex();
+        return Token{ .kind = TokenKind.DOUBLE_QUOTE, .value = "\"" };
+    }
+
     pub fn readSpace(self: *Self) Token {
         const start = self.index;
         while (self.peekChar() == ' ') {
@@ -68,7 +75,7 @@ pub const Lexer = struct {
 
     pub fn readLiteral(self: *Self) Token {
         const start = self.index;
-        while (self.peekChar() != ' ' and self.peekChar() != '\'' and self.peekChar() != 0) {
+        while (self.peekChar() != ' ' and self.peekChar() != '\'' and self.peekChar() != '"' and self.peekChar() != 0) {
             self.increaseIndex();
         }
         return Token{ .kind = TokenKind.LITERAL, .value = self.input[start..self.index] };
