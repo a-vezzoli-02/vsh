@@ -6,6 +6,7 @@ const par = @import("parser.zig");
 const Parser = par.Parser;
 const ParserCommand = par.ParserCommand;
 const Lexer = @import("lexer.zig").Lexer;
+const Options = @import("options.zig").Options;
 const commands = @import("commands.zig");
 const fs = @import("fs.zig");
 
@@ -36,27 +37,66 @@ pub fn main() !void {
     path_context.initSelf();
     defer path_context.deinit();
 
-    while (true) {
-        const command = try prompt_new_line();
+    var options = Options{};
 
+    while (true) {
         var arena = std.heap.ArenaAllocator.init(allocator);
         defer arena.deinit();
+        const arena_allocator = arena.allocator();
+
+        const command = try prompt_new_line(arena_allocator, &options, &path_context);
 
         try handle_command(
-            arena.allocator(),
+            arena_allocator,
+            &options,
             &path_context,
             command,
         );
     }
 }
 
-fn prompt_new_line() !?string {
+fn prompt_new_line(allocator: std.mem.Allocator, options: *const Options, path_context: *const fs.PathContext) !?string {
+    if (options.show_pwd) {
+        if (options.tail_pwd == 0) {
+            try stdout.print("{s}", .{path_context.pwd});
+        } else {
+            var arena = std.heap.ArenaAllocator.init(allocator);
+            defer arena.deinit();
+            const arena_allocator = arena.allocator();
+
+            var list = std.ArrayList(string).empty;
+
+            var reached_root = false;
+            var components = try std.fs.path.componentIterator(path_context.pwd);
+            if (components.last()) |last| {
+                try list.append(arena_allocator, last.name);
+
+                for (1..options.tail_pwd) |_| {
+                    if (components.previous()) |next| {
+                        try list.append(arena_allocator, next.name);
+                    } else {
+                        reached_root = true;
+                        break;
+                    }
+                }
+            }
+
+            std.mem.reverse(string, list.items);
+            const concat = try std.mem.join(arena_allocator, "/", list.items);
+
+            if (reached_root) {
+                try stdout.print("/", .{});
+            }
+            try stdout.print("{s}", .{concat});
+        }
+    }
     try stdout.print("$ ", .{});
     return try stdin.takeDelimiter('\n');
 }
 
 fn handle_command(
     allocator: std.mem.Allocator,
+    options: *Options,
     path_context: *fs.PathContext,
     command: ?string,
 ) !void {
@@ -66,6 +106,7 @@ fn handle_command(
         } else {
             try handle_command_tokenize(
                 allocator,
+                options,
                 path_context,
                 c,
             );
@@ -77,6 +118,7 @@ fn handle_command(
 
 fn handle_command_tokenize(
     allocator: std.mem.Allocator,
+    options: *Options,
     path_context: *fs.PathContext,
     command: string,
 ) !void {
@@ -90,6 +132,7 @@ fn handle_command_tokenize(
     if (parser_command) |*pcom| {
         try handle_command_tokenize_first(
             allocator,
+            options,
             path_context,
             pcom,
         );
@@ -100,6 +143,7 @@ fn handle_command_tokenize(
 
 fn handle_command_tokenize_first(
     allocator: std.mem.Allocator,
+    options: *Options,
     path_context: *fs.PathContext,
     parser_command: *const ParserCommand,
 ) !void {
@@ -111,6 +155,7 @@ fn handle_command_tokenize_first(
     if (command) |c| {
         const context = commands.ExecutableContext{
             .allocator = arena_allocator,
+            .options = options,
             .stdout = stdout,
             .parser_command = parser_command,
             .path = path_context,

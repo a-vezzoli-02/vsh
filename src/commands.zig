@@ -1,5 +1,6 @@
 const ParserCommand = @import("parser.zig").ParserCommand;
 const std = @import("std");
+const Options = @import("options.zig").Options;
 const Io = std.Io;
 const IoError = Io.Writer.Error;
 const string = []const u8;
@@ -7,6 +8,7 @@ const fs = @import("fs.zig");
 
 pub const ExecutableContext = struct {
     allocator: std.mem.Allocator,
+    options: *Options,
     stdout: *Io.Writer,
     parser_command: *const ParserCommand,
     path: *fs.PathContext,
@@ -29,6 +31,8 @@ const commands = [_]Command{
     .{ .name = "type", .handler = type_cmd },
     .{ .name = "pwd", .handler = pwd_cmd },
     .{ .name = "cd", .handler = cd_cmd },
+    .{ .name = "set", .handler = set_cmd },
+    .{ .name = "show", .handler = show_cmd },
 };
 
 pub fn find_executable(allocator: std.mem.Allocator, name: string) ?Executable {
@@ -105,6 +109,41 @@ fn cd_cmd(context: ExecutableContext) IoError!void {
         error.InvalidPath => try context.stdout.print("cd: {s}: No such file or directory\n", .{arg}),
         else => try context.stdout.print("cd: {s}: {s}\n", .{ arg, @errorName(err) }),
     };
+}
+
+fn set_cmd(context: ExecutableContext) IoError!void {
+    if (context.parser_command.args.len < 2) {
+        try context.stdout.print("type: missing arg(s)\n", .{});
+    }
+
+    if (context.parser_command.args.len > 2) {
+        try context.stdout.print("type: too many args\n", .{});
+    }
+
+    const field_name = context.parser_command.args[0];
+    const value = context.parser_command.args[1];
+
+    if (std.mem.eql(u8, field_name.value, "show_pwd")) {
+        context.options.show_pwd = std.mem.eql(u8, value.value, "true");
+    } else if (std.mem.eql(u8, field_name.value, "tail_pwd")) {
+        context.options.tail_pwd = std.fmt.parseInt(u8, value.value, 10) catch {
+            try context.stdout.print("set: {s} is not a positive number\n", .{value.value});
+            return;
+        };
+    } else {
+        try context.stdout.print("set: unknown field {s}\n", .{field_name.value});
+    }
+}
+
+fn show_cmd(context: ExecutableContext) IoError!void {
+    const arg = if (context.parser_command.args.len > 0) context.parser_command.args[0].value else "";
+
+    if (std.mem.eql(u8, arg, "show_pwd") or arg.len == 0) {
+        try context.stdout.print("show_pwd: {s}\n", .{if (context.options.show_pwd) "true" else "false"});
+    }
+    if (std.mem.eql(u8, arg, "tail_pwd") or arg.len == 0) {
+        try context.stdout.print("tail_pwd: {d}\n", .{context.options.tail_pwd});
+    }
 }
 
 pub fn run_path_executable(context: ExecutableContext) IoError!void {
